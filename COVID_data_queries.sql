@@ -11,6 +11,7 @@ SELECT location, date, total_cases, total_deaths, (total_deaths/total_cases)*100
 FROM COVID_Data_Analysis..CovidDeaths
 ORDER BY 1, 2
 
+
 /* Total Cases VS Total Deaths (Death Percentage) by continent */
 
 SELECT location, date, total_cases, total_deaths, (total_deaths/total_cases)*100 AS Death_Percentage
@@ -24,14 +25,6 @@ SELECT location, date, total_cases, total_deaths, (total_deaths/total_cases)*100
 FROM COVID_Data_Analysis..CovidDeaths
 WHERE location LIKE '%france%'
 ORDER BY date
-
-/* Looking at Death Percentage of more than 10 (using nested query) */
-
-SELECT location, date, total_cases, total_deaths, Death_Percentage
-FROM (Select location, date, total_cases, total_deaths, (total_deaths/total_cases)*100 AS Death_Percentage
-		FROM COVID_Data_Analysis..CovidDeaths) AS all_percentage
-WHERE Death_Percentage > 10 
-ORDER BY Death_Percentage
 
 /* Looking at Total Cases VS Population (Infection rate) in a specific country */
 
@@ -79,7 +72,7 @@ FROM (Select location, MAX(total_cases) AS Maximum_Cases, population
 		GROUP BY location, population) AS Max_Total_Cases
 ORDER BY Infection_Rate DESC
 
-/* Total Deaths Count by countries */
+/* Total Deaths by countries */
 
 SELECT location, MAX(cast(total_deaths AS INT)) AS Total_Deaths
 FROM COVID_Data_Analysis..CovidDeaths
@@ -87,7 +80,7 @@ WHERE continent IS NOT NULL
 GROUP BY location
 ORDER BY Total_Deaths DESC
 
-/* Countries with Highest Death Count per Population */
+/* Total Deaths VS Population (Death Rate) */
 
 SELECT location, MAX(cast(total_deaths AS INT)) AS Total_Deaths, population, MAX(total_deaths/population)*100 AS Death_Rate
 FROM COVID_Data_Analysis..CovidDeaths
@@ -95,7 +88,7 @@ WHERE continent IS NOT NULL
 GROUP BY location, population
 ORDER BY Death_Rate DESC
 
-/* Total Deaths Count by continent */
+/* Total Deaths by continent */
 
 SELECT location, MAX(cast(total_deaths AS INT)) AS Total_Deaths
 FROM COVID_Data_Analysis..CovidDeaths
@@ -113,7 +106,7 @@ ORDER BY DeathRate DESC
 
 /* GLOBAL NUMBERS */
 
-/* Calculating Total New Cases and New Deaths by date globaly */
+/* 3Total New Cases and New Deaths by date globaly */
 
 SELECT date, SUM(new_cases) AS New_Cases, SUM(cast(new_deaths AS INT)) AS New_Deaths
 FROM COVID_Data_Analysis..CovidDeaths
@@ -156,7 +149,7 @@ ORDER BY 1,2
 
 /* Looking at number of Total Vaccinations VS Population */
 
-SELECT dea.location, dea.population, MAX(vac.total_vaccinations) AS total_vacs
+SELECT dea.location, dea.population, MAX(CAST(vac.total_vaccinations AS BIGINT)) AS total_vacs
 FROM COVID_Data_Analysis..CovidDeaths dea
 JOIN COVID_Data_Analysis..CovidVaccinations vac
 	ON dea.location = vac.location
@@ -165,10 +158,10 @@ WHERE dea.continent IS NOT NULL
 GROUP BY dea.location, dea.population
 ORDER BY 1,2
 
-/* Calculating Vaccination Rate for each country using nested query */
+/* Calculating Vaccination Rate (fully vaccinated people) for each country using nested query */
 
 SELECT location, (total_vacs/population)*100 as vaccination_rate
-FROM (SELECT dea.location, dea.population, MAX(vac.total_vaccinations) AS total_vacs
+FROM (SELECT dea.location, dea.population, MAX(CAST(vac.people_fully_vaccinated AS BIGINT)) AS total_vacs
 		FROM COVID_Data_Analysis..CovidDeaths dea
 		JOIN COVID_Data_Analysis..CovidVaccinations vac
 			ON dea.location = vac.location
@@ -177,12 +170,12 @@ FROM (SELECT dea.location, dea.population, MAX(vac.total_vaccinations) AS total_
 		GROUP BY dea.location, dea.population) AS total_vacs_vs_pop
 ORDER BY vaccination_rate DESC
 
-/* Calculating Vaccination Rate for each country using CTE (common table expression) */
+/* Calculating Vaccination Rate (fully vaccinated people) for each country using CTE (common table expression) */
 
 WITH total_vacs_vs_pop (location, population, total_vacs)
 AS
 (
-SELECT dea.location, dea.population, MAX(vac.total_vaccinations) AS total_vacs
+SELECT dea.location, dea.population, MAX(CAST(vac.people_fully_vaccinated AS BIGINT)) AS total_vacs
 		FROM COVID_Data_Analysis..CovidDeaths dea
 		JOIN COVID_Data_Analysis..CovidVaccinations vac
 			ON dea.location = vac.location
@@ -259,13 +252,13 @@ SELECT *
 FROM COVID_Data_Analysis..CovidVaccinations
 
 SELECT *
-FROM COVID_Data_Analysis..CovidDeaths
+FROM COVID_Data_Analysis..CovidDeaths;
 
 /* Creating View to store data for later visualisations */
 
 CREATE VIEW Vaccination_Percentage AS
 SELECT location, (total_vacs/population)*100 as vaccination_rate
-FROM (SELECT dea.location, dea.population, MAX(vac.total_vaccinations) AS total_vacs
+FROM (SELECT dea.location, dea.population, MAX(CAST(vac.people_fully_vaccinated AS BIGINT)) AS total_vacs
 		FROM COVID_Data_Analysis..CovidDeaths dea
 		JOIN COVID_Data_Analysis..CovidVaccinations vac
 			ON dea.location = vac.location
@@ -273,5 +266,63 @@ FROM (SELECT dea.location, dea.population, MAX(vac.total_vaccinations) AS total_
 		WHERE dea.continent IS NOT NULL
 		GROUP BY dea.location, dea.population) AS total_vacs_vs_pop
 
+/* Queries used for Tableau visualizations */
 
+/* Total Cases, Total Deaths and Average Death Percentage GLOBALLY */
 
+SELECT MAX(total_cases) AS Total_Cases, MAX(CAST(total_deaths AS FLOAT)) AS Total_Deaths, (MAX(CAST(total_deaths AS FLOAT))/MAX(total_cases))*100 AS Avg_Death_Percentage
+FROM COVID_Data_Analysis..CovidDeaths
+WHERE location = 'world'
+
+/* Total Deaths by continent by the end of the survey */
+
+SELECT location, MAX(CAST(total_deaths AS BIGINT)) AS Total_Deaths
+FROM COVID_Data_Analysis..CovidDeaths
+WHERE continent IS NULL AND location NOT IN ('World', 'European Union', 'International', 'High income', 'Upper middle income', 'Lower middle income', 'Low income')
+GROUP BY location
+ORDER BY Total_Deaths DESC
+
+/* Final Total Cases VS Total Deaths (Death Percentage) by the end of the survey period */
+
+SELECT location, MAX(total_cases) AS Total_Cases, MAX(CAST(total_deaths AS BIGINT)) AS Total_Deaths, MAX(CAST(total_deaths AS BIGINT))/MAX(total_cases)*100 AS Final_Death_Percentage
+FROM COVID_Data_Analysis..CovidDeaths
+WHERE continent IS NOT NULL
+GROUP BY location
+ORDER BY Final_Death_Percentage DESC
+
+/* Total Percent of Population Infected by country */
+
+SELECT location, population, MAX(total_cases) as Total_Infected_People, (MAX(total_cases)/population)*100 as Percent_Population_Infected
+FROM COVID_Data_Analysis..CovidDeaths
+WHERE continent IS NOT NULL
+GROUP BY location, population
+ORDER BY Percent_Population_Infected DESC
+
+/* Maximum Reproduction Rate by country */
+
+SELECT location, MAX(reproduction_rate) AS Reproduction_Rate
+FROM COVID_Data_Analysis..CovidDeaths
+WHERE continent IS NOT NULL AND reproduction_rate IS NOT NULL AND ISNUMERIC(reproduction_rate) = 1
+GROUP BY location
+ORDER  BY Reproduction_Rate	DESC
+
+/* Infection Rate by date in each country */
+
+SELECT location, date, population, total_cases, (total_cases/population)*100 AS Percent_Of_Population_Infected
+FROM COVID_Data_Analysis..CovidDeaths
+WHERE continent IS NOT NULL
+ORDER BY 1,2
+
+/* People Fully Vaccinated by date in each country */
+
+SELECT location, date, people_fully_vaccinated
+FROM COVID_Data_Analysis..CovidVaccinations
+WHERE continent IS NOT NULL AND people_fully_vaccinated IS NOT NULL
+ORDER BY 1,2
+
+/* Death Percentage (Cases VS Deaths) by date in each country */
+
+SELECT location, date, total_cases, total_deaths, (total_deaths/total_cases)*100 AS Death_Percentage
+FROM COVID_Data_Analysis..CovidDeaths
+WHERE continent IS NOT NULL
+ORDER BY 1,2
