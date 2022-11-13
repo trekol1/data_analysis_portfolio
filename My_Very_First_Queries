@@ -1,0 +1,62 @@
+CREATE TABLE
+    student (
+        student_id INT AUTO_INCREMENT,
+        name VARCHAR(20),
+        major VARCHAR(20) DEFAULT 'undecided',
+        PRIMARY KEY(student_id)
+    );
+
+DESCRIBE student;
+
+SELECT * FROM student;
+
+SELECT * FROM student WHERE major != 'undecided';
+
+INSERT INTO student(name, major) VALUES('Jack', 'Biology');
+
+INSERT INTO student(name, major) VALUES('John', 'Maths');
+
+INSERT INTO student(name, major) VALUES('Alex', 'Economics');
+
+INSERT INTO student(name, major) VALUES('Kate', 'Sociology');
+
+INSERT INTO student(name) VALUES('Max');
+
+INSERT INTO student(name) VALUES('Brad');
+
+INSERT INTO student(name) VALUES('Solomon');
+
+UPDATE student
+SET major = 'Bio' WHERE major = 'Biology';
+
+UPDATE student
+SET major = 'Sport' WHERE major = 'undecided' AND name = 'Max';
+
+UPDATE student
+SET major = 'History' WHERE major = 'undecided';
+
+UPDATE student
+SET major = CONCAT('Major ', student_id) WHERE student_id != 0;
+
+UPDATE student
+SET name = 'The first student' WHERE student_id = 1;
+
+UPDATE student
+SET major = LEFT(name, 1) WHERE major = 'undecided';
+
+SELECT student_id FROM student;
+
+DELETE FROM student WHERE LENGTH(major) = 1;
+
+SELECT LENGTH('2017-08');
+
+SELECT * 
+FROM student
+ORDER BY student_id DESC
+LIMIT 2;
+
+SELECT name, major
+FROM student
+WHERE major = 'undecided' OR name = 'Alex' OR name IN ('Claire', 'Mary');
+
+DROP TABLE student;
