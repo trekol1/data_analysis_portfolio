@@ -266,7 +266,13 @@ FROM (SELECT dea.location, dea.population, MAX(CAST(vac.people_fully_vaccinated 
 		WHERE dea.continent IS NOT NULL
 		GROUP BY dea.location, dea.population) AS total_vacs_vs_pop;
 
-/* Queries used for Tableau visualizations */
+/*
+
+Queries used for Tableau visualizations
+
+Tableau Dashboard: https://public.tableau.com/app/profile/george3027/viz/COVID_Data_Analysis/COVIDDataDashboard
+
+*/
 
 /* Total Cases, Total Deaths and Average Death Percentage GLOBALLY */
 
